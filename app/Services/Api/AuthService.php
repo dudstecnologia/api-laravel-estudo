@@ -4,7 +4,6 @@ namespace App\Services\Api;
 
 use App\User;
 use Throwable;
-use Illuminate\Support\Facades\Auth;
 
 class AuthService
 {
@@ -17,11 +16,37 @@ class AuthService
 
             return self::respondWithToken($token);
         } catch (Throwable $th) {
-            return response(['message' => $th->getMessage()], 401);
+            return response()->json(['error' => $th->getMessage()], 401);
         }
     }
 
-    public static function respondWithToken($token)
+    public function login($request)
+    {
+        if (!$token = auth()->attempt($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        return self::respondWithToken($token);
+    }
+
+    public function logout()
+    {
+        auth()->logout();
+
+        return response()->json(['message' => 'Deslogado com sucesso']);
+    }
+
+    public function refresh()
+    {
+        return self::respondWithToken(auth()->refresh());
+    }
+
+    public function user()
+    {
+        return response()->json(auth()->user());
+    }
+
+    protected static function respondWithToken($token)
     {
         return response()->json([
             'access_token' => $token,
